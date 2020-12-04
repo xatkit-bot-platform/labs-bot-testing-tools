@@ -19,5 +19,15 @@
 *.tar.gz
 *.rar
 
+# Maven
+/target/**
+
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# DialogFlow
+*key.json
+
+# IntelliJ
+*.iml
+.idea
