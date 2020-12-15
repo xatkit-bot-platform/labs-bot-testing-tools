@@ -1,8 +1,10 @@
 package com.xatkit.testing.recognition.dialogflow;
 
+import com.xatkit.core.XatkitBot;
 import com.xatkit.core.recognition.EntityMapper;
 import com.xatkit.core.recognition.IntentRecognitionProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
+import com.xatkit.core.recognition.dialogflow.DialogFlowStateContext;
 import com.xatkit.core.recognition.dialogflow.mapper.DialogFlowEntityReferenceMapper;
 import com.xatkit.execution.ExecutionModel;
 import com.xatkit.execution.State;
@@ -18,10 +20,10 @@ public class DialogFlowIntentMatcher {
     private DialogFlowTestingContext testingContext;
     private IntentRecognitionProvider intentRecognitionProvider;
 
-    public DialogFlowIntentMatcher(ExecutionModel botModel, DialogFlowTestingContext testingContext, IntentRecognitionProvider intentRecognitionProvider){
-        this.botModel = botModel;
-        this.testingContext = testingContext;
-        this.intentRecognitionProvider = intentRecognitionProvider;
+    public DialogFlowIntentMatcher(XatkitBot xatkitBot) throws IntentRecognitionProviderException {
+        this.botModel = xatkitBot.getExecutionService().getModel();
+        this.intentRecognitionProvider = xatkitBot.getIntentRecognitionProvider();
+        this.testingContext = new DialogFlowTestingContext((DialogFlowStateContext) intentRecognitionProvider.createContext("DialogFlowIntentMatcherContext"));
     }
 
     public List<IntentMatch> getMatchingIntents() throws IntentRecognitionProviderException {
