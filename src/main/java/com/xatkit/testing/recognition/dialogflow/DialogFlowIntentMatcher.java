@@ -4,6 +4,7 @@ import com.xatkit.core.XatkitBot;
 import com.xatkit.core.recognition.EntityMapper;
 import com.xatkit.core.recognition.IntentRecognitionProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
+import com.xatkit.core.recognition.dialogflow.DialogFlowIntentRecognitionProvider;
 import com.xatkit.core.recognition.dialogflow.DialogFlowStateContext;
 import com.xatkit.core.recognition.dialogflow.mapper.DialogFlowEntityReferenceMapper;
 import com.xatkit.execution.ExecutionModel;
@@ -18,12 +19,19 @@ public class DialogFlowIntentMatcher {
 
     private ExecutionModel botModel;
     private DialogFlowTestingContext testingContext;
-    private IntentRecognitionProvider intentRecognitionProvider;
+    private DialogFlowIntentRecognitionProvider intentRecognitionProvider;
+    private final static String TESTING_CONTEXT_NAME = "DialogFlowIntentMatcherContext";
 
     public DialogFlowIntentMatcher(XatkitBot xatkitBot) throws IntentRecognitionProviderException {
         this.botModel = xatkitBot.getExecutionService().getModel();
-        this.intentRecognitionProvider = xatkitBot.getIntentRecognitionProvider();
-        this.testingContext = new DialogFlowTestingContext((DialogFlowStateContext) intentRecognitionProvider.createContext("DialogFlowIntentMatcherContext"));
+        this.intentRecognitionProvider = (DialogFlowIntentRecognitionProvider) xatkitBot.getIntentRecognitionProvider();
+        this.testingContext = new DialogFlowTestingContext((DialogFlowStateContext) intentRecognitionProvider.createContext(TESTING_CONTEXT_NAME));
+    }
+
+    public DialogFlowIntentMatcher(ExecutionModel botModel, DialogFlowIntentRecognitionProvider intentRecognitionProvider) throws IntentRecognitionProviderException {
+        this.botModel = botModel;
+        this.intentRecognitionProvider = intentRecognitionProvider;
+        this.testingContext = new DialogFlowTestingContext((DialogFlowStateContext) intentRecognitionProvider.createContext(TESTING_CONTEXT_NAME));
     }
 
     public List<IntentMatch> getMatchingIntents() throws IntentRecognitionProviderException {
@@ -35,17 +43,17 @@ public class DialogFlowIntentMatcher {
                 intents.remove(i);
                 testingContext.enableIntents(intents.toArray(new IntentDefinition[0]));
                 for (String sentence : i.getTrainingSentences()){
-                    for (ContextParameter param : i.getParameters()) {
+                    /*for (ContextParameter param : i.getParameters()) {
                         EntityDefinition entity = param.getEntity().getReferredEntity();
                         for (String fragment : param.getTextFragments()) {
                             String concreteEntity = mapper.getMappingFor(entity);
                             sentence = sentence.replaceAll(fragment, concreteEntity);
                         }
-                    }
+                    }*/
                     RecognizedIntent recognizedIntent = intentRecognitionProvider.getIntent(sentence, testingContext);
                     if(!recognizedIntent.getDefinition().equals(IntentRecognitionProvider.DEFAULT_FALLBACK_INTENT)){
                         float confidence = recognizedIntent.getRecognitionConfidence();
-                        matchingIntents.add(new IntentMatch(i, (IntentDefinition) recognizedIntent.getDefinition(), confidence));
+                        matchingIntents.add(new IntentMatch(i, (IntentDefinition) recognizedIntent.getDefinition(), s, sentence, confidence));
                     }
                 }
             }

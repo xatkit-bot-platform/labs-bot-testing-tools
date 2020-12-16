@@ -20,7 +20,7 @@ public class DummiestBotModel extends ExecutionModelImpl {
                 .parameter("name")
                 .fromFragment("NAME")
                 .entity(
-                        city()
+                        any()
                 )
                 .getIntentDefinition();
 
@@ -29,7 +29,7 @@ public class DummiestBotModel extends ExecutionModelImpl {
                 .parameter("name")
                 .fromFragment("NAME")
                 .entity(
-                        city()
+                        any()
                 )
                 .getIntentDefinition();
 
