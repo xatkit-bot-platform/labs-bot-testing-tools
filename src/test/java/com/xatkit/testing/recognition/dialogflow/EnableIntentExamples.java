@@ -7,6 +7,8 @@ import com.xatkit.core.recognition.dialogflow.DialogFlowIntentRecognitionProvide
 import com.xatkit.core.recognition.dialogflow.DialogFlowStateContext;
 import com.xatkit.intent.IntentDefinition;
 import com.xatkit.intent.RecognizedIntent;
+import com.xatkit.stubs.TestingStateContext;
+import com.xatkit.stubs.TestingStateContextFactory;
 import com.xatkit.testing.recognition.dialogflow.model.GreetingsBotModel;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -75,7 +77,7 @@ public class EnableIntentExamples {
      */
     @Test
     public void testGreetingsEnabled() throws IntentRecognitionProviderException {
-        DialogFlowTestingContext testingContext = getTestingContext();
+        TestingStateContext testingContext = getTestingContext();
         testingContext.enableIntents(botModel.getGreetings());
         RecognizedIntent recognizedIntent = dialogFlowProvider.getIntent("Hello", testingContext);
         assertThat(recognizedIntent.getDefinition()).isEqualTo(botModel.getGreetings());
@@ -89,7 +91,7 @@ public class EnableIntentExamples {
      */
     @Test
     public void testGreetingsNotEnabled() throws IntentRecognitionProviderException {
-        DialogFlowTestingContext testingContext = getTestingContext();
+        TestingStateContext testingContext = getTestingContext();
         RecognizedIntent recognizedIntent = dialogFlowProvider.getIntent("Hello", testingContext);
         assertThat(recognizedIntent.getDefinition()).isEqualTo(IntentRecognitionProvider.DEFAULT_FALLBACK_INTENT);
     }
@@ -102,25 +104,24 @@ public class EnableIntentExamples {
      */
     @Test
     public void testGreetingsOtherIntentEnabled() throws IntentRecognitionProviderException {
-        DialogFlowTestingContext testingContext = getTestingContext();
+        TestingStateContext testingContext = getTestingContext();
         testingContext.enableIntents(botModel.getFine(), botModel.getHowAreYou());
         RecognizedIntent recognizedIntent = dialogFlowProvider.getIntent("Hello", testingContext);
         assertThat(recognizedIntent.getDefinition()).isEqualTo(IntentRecognitionProvider.DEFAULT_FALLBACK_INTENT);
     }
 
     /**
-     * Returns an empty {@link DialogFlowTestingContext}.
+     * Returns an empty {@link TestingStateContext}.
      * <p>
-     * The returned {@link DialogFlowTestingContext} is properly initialized but does not enable any intent, use
-     * {@link DialogFlowTestingContext#enableIntents(IntentDefinition...)} to configure it.
+     * The returned {@link TestingStateContext} is properly initialized but does not enable any intent, use
+     * {@link TestingStateContext#enableIntents(IntentDefinition...)} to configure it.
      *
-     * @return the created {@link DialogFlowTestingContext}
+     * @return the created {@link TestingStateContext}
      * @throws IntentRecognitionProviderException if the DialogFlow connector fails to create the underlying
      *                                            {@link DialogFlowStateContext}
      */
-    private DialogFlowTestingContext getTestingContext() throws IntentRecognitionProviderException {
-        DialogFlowStateContext context = (DialogFlowStateContext) dialogFlowProvider.createContext("TestContext");
-        return new DialogFlowTestingContext(context);
+    private TestingStateContext getTestingContext() throws IntentRecognitionProviderException {
+        return TestingStateContextFactory.wrap(dialogFlowProvider.createContext("TestContext"));
     }
 
 }

@@ -4,6 +4,8 @@ import com.xatkit.core.XatkitBot;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.core.recognition.dialogflow.DialogFlowIntentRecognitionProvider;
 import com.xatkit.execution.ExecutionModel;
+import com.xatkit.testing.intentMatcher.IntentMatcher;
+import com.xatkit.testing.intentMatcher.matches.IntentMatch;
 import com.xatkit.testing.recognition.dialogflow.model.DummiestBotModel;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.builder.fluent.Configurations;
@@ -73,8 +75,8 @@ public class DummiestBotMatchIntentTest {
 
     @Test
     public void testMatchingIntents() throws IntentRecognitionProviderException {
-        DialogFlowIntentMatcher dialogFlowIntentMatcher = new DialogFlowIntentMatcher(xatkitBot);
-        List<IntentMatch> matchingIntents = dialogFlowIntentMatcher.getMatchingIntents();
+        IntentMatcher intentMatcher = new IntentMatcher(xatkitBot);
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntents();
         assertThat(matchingIntents.size()).isEqualTo(2);
     }
 }
