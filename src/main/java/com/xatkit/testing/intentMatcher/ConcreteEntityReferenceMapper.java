@@ -3,10 +3,16 @@ package com.xatkit.testing.intentMatcher;
 import com.xatkit.core.recognition.EntityMapper;
 import com.xatkit.intent.CustomEntityDefinition;
 import com.xatkit.intent.EntityType;
+import com.xatkit.intent.MappingEntityDefinitionEntry;
+import com.xatkit.intent.impl.MappingEntityDefinitionImpl;
+import org.eclipse.emf.common.util.EList;
 
 import java.text.MessageFormat;
+import java.util.Random;
 
 public class ConcreteEntityReferenceMapper extends EntityMapper {
+
+    private final Random rng = new Random();
 
     public ConcreteEntityReferenceMapper() {
         this.registerDateTimeEntities();
@@ -97,6 +103,7 @@ public class ConcreteEntityReferenceMapper extends EntityMapper {
     }
 
     protected String getMappingForCustomEntity(CustomEntityDefinition customEntityDefinition) {
-        return customEntityDefinition.getName();
+        EList<MappingEntityDefinitionEntry> entries = ((MappingEntityDefinitionImpl) customEntityDefinition).getEntries();
+        return entries.get(rng.nextInt(entries.size())).getReferenceValue();
     }
 }
