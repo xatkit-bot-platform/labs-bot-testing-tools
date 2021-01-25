@@ -41,13 +41,13 @@ public class IntentMatcher {
     public List<IntentMatch> getMatchingIntents() throws IntentRecognitionProviderException {
         List<IntentMatch> matchingIntents = new ArrayList<>();
         EntityMapper mapper = new ConcreteEntityReferenceMapper();
-        for(State s: botModel.getStates()){
-            for (IntentDefinition i :s.getAllAccessedIntents()){
-                Collection<IntentDefinition> intents = s.getAllAccessedIntents();
-                intents.remove(i);
+        for(State actualState: botModel.getStates()){
+            for (IntentDefinition actualIntent :actualState.getAllAccessedIntents()){
+                Collection<IntentDefinition> intents = actualState.getAllAccessedIntents();
+                intents.remove(actualIntent);
                 testingContext.enableIntents(intents.toArray(new IntentDefinition[0]));
-                for (String sentence : i.getTrainingSentences()){
-                    for (ContextParameter param : i.getParameters()) {
+                for (String sentence : actualIntent.getTrainingSentences()){
+                    for (ContextParameter param : actualIntent.getParameters()) {
                         String concreteEntity = mapper.getMappingFor(param.getEntity().getReferredEntity());
                         for (String fragment : param.getTextFragments()) {
                             sentence = sentence.replaceAll(fragment, concreteEntity);
@@ -56,7 +56,7 @@ public class IntentMatcher {
                     RecognizedIntent recognizedIntent = intentRecognitionProvider.getIntent(sentence, testingContext);
                     if(!recognizedIntent.getDefinition().equals(IntentRecognitionProvider.DEFAULT_FALLBACK_INTENT)){
                         float confidence = recognizedIntent.getRecognitionConfidence();
-                        matchingIntents.add(new IntentMatch(i, (IntentDefinition) recognizedIntent.getDefinition(), s, sentence, confidence));
+                        matchingIntents.add(new IntentMatch(actualIntent, (IntentDefinition) recognizedIntent.getDefinition(), actualState, sentence, confidence));
                     }
                 }
             }
