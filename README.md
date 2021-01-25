@@ -1,33 +1,40 @@
 # Xatkit's DialogFlow Testing Tools
-This repository contains utility classes to do advanced testing on top of the DialogFlow connector of Xatkit.
+This repository contains utility classes to do advanced testing on top of a NLP engine of Xatkit.
 
 ## Installation
 
 You need to have [Xatkit installed locally](https://github.com/xatkit-bot-platform/xatkit/wiki/Build-Xatkit) to use this project. You can then import this project as a maven project in you preferred editor.
 
-
-
 ## How-Tos
 
-### Configure the intents that can be matched by DialogFlow
+### Configure DialogFlow
 
-The class `DialogFlowTestingContext` is what you need: it wraps an existing `DialogFlowStateContext` and provides a simple API to enable intents. The `DialogFlowTestingContext` can then be used to retrieve the intent from a given input:
+- Set your DialogFlow project id at:
 
-```java
-DialogFlowStateContext dfContext = 
-    (DialogFlowStateContext) intentProvider.createContext("MyContext");
-DialogFlowTestingContext testingContext = 
-    new DialogFlowTestingContext(dfContext);
-testingContext.enableIntents(greetingsIntent)
-RecognizedIntent recoginzedIntent = intentProvider.getIntent("Hello", testingContext);
-assertThat(recognizedIntent.getDefinition()).isEqualTo(greetingsIntent);
+  - src > test > resources > greetings-bot.properties
+
+```
+xatkit.dialogflow.projectId=<your-dialogflow-project-id>
+xatkit.dialogflow.language=en-US
+xatkit.dialogflow.clean_on_startup=true
+xatkit.dialogflow.credentials.path=key.json
 ```
 
-> 📚 Using `DialogFlowTestingContext` does not alter the underlying DialogFlow agent, so there is no need to retrain the agent nor redeploy the Xatkit bot.
+- Include your key.json at 
+
+  - src > test > resources > key.json
 
 
+### Running tests
 
-Note that `DialogFlowTestingContext#enableIntents` fully overrides the default Xatkit behavior, and there is no easy way to retrieve which intents should have been matched in a standard scenario.
+You can run the tests with the MatchIntentExample class, located in src > test > java
 
->  🛠 Check [this class](https://github.com/xatkit-bot-platform/labs-dialogflow-testing-tools/blob/main/src/test/java/com/xatkit/testing/recognition/dialogflow/EnableIntentExamples.java) for a few examples showing how to enable intents and check the value returned by `getIntent`. (make sure you properly edit the corresponding `.properties` file first! Check the class documentation for more information)
+- The testMatchingIntents method will perform the intent matching from every state of the bot
+  - The method will print all the found matching intents when it finishes in the format: 
+  ```Intent "<intent-name>" was confused with intent "<intent-name>" from state "<state-name>" with the sentence "<failing-utterance>" and a confidence of <confidence-score>```
 
+- The testStatelessMatchingIntents method will perform a stateless matching of the intents
+  - The method will print all the found matching intents when it finishes in the format: 
+  ```Intent "<intent-name>" was confused with intent "<intent-name>" with the sentence "<failing-utterance>" and a confidence of <confidence-score>```
+
+- In order to change the bot model you can change the definition at: ```private static ExecutionModel botModel = new ChatBotCorpusBotModel();``` for any Bot Execution model.
