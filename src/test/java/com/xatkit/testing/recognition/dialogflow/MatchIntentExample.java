@@ -58,11 +58,10 @@ public class MatchIntentExample {
         botThread.interrupt();
     }
 
-
     @Test
     public void testMatchingIntents() throws IntentRecognitionProviderException {
-        IntentMatcher dialogFlowIntentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
-        List<IntentMatch> matchingIntents = dialogFlowIntentMatcher.getMatchingIntents();
+        IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntents();
         if(matchingIntents.size() == 0){
             System.out.println("NO matching intents");
         }
@@ -76,10 +75,30 @@ public class MatchIntentExample {
             }
         }
     }
+
+    @Test
+    public void testMatchingIntentsWithAllEntities() throws IntentRecognitionProviderException {
+        IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
+        //List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntities();
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntitiesInThread();
+        if(matchingIntents.size() == 0){
+            System.out.println("NO matching intents");
+        }
+        else {
+            for (IntentMatch im : matchingIntents) {
+                System.out.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+            }
+        }
+    }
+
     @Test
     public void testStatelessMatchingIntents() throws IntentRecognitionProviderException {
-        IntentMatcher dialogFlowIntentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
-        List<StatelessIntentMatch> matchingIntents = dialogFlowIntentMatcher.getStatelessMatchingIntents();
+        IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
+        List<StatelessIntentMatch> matchingIntents = intentMatcher.getStatelessMatchingIntents();
         if(matchingIntents.size() == 0){
             System.out.println("NO matching intents");
         }

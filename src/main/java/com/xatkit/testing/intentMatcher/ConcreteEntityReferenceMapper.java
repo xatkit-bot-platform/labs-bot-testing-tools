@@ -1,18 +1,22 @@
 package com.xatkit.testing.intentMatcher;
 
+import com.xatkit.core.XatkitException;
 import com.xatkit.core.recognition.EntityMapper;
-import com.xatkit.intent.CustomEntityDefinition;
-import com.xatkit.intent.EntityType;
-import com.xatkit.intent.MappingEntityDefinitionEntry;
+import com.xatkit.intent.*;
 import com.xatkit.intent.impl.MappingEntityDefinitionImpl;
+import fr.inria.atlanmod.commons.Preconditions;
+import fr.inria.atlanmod.commons.log.Log;
 import org.eclipse.emf.common.util.EList;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 public class ConcreteEntityReferenceMapper extends EntityMapper {
 
-    private final Random rng = new Random();
+    private final Random rng = new Random(42);
 
     public ConcreteEntityReferenceMapper() {
         this.registerDateTimeEntities();
@@ -105,5 +109,29 @@ public class ConcreteEntityReferenceMapper extends EntityMapper {
     protected String getMappingForCustomEntity(CustomEntityDefinition customEntityDefinition) {
         EList<MappingEntityDefinitionEntry> entries = ((MappingEntityDefinitionImpl) customEntityDefinition).getEntries();
         return entries.get(rng.nextInt(entries.size())).getReferenceValue();
+    }
+
+    protected List<String> getAllMappingsForCustomEntity(CustomEntityDefinition customEntityDefinition) {
+        List<String> customEntities = new ArrayList<>();
+        for (MappingEntityDefinitionEntry entry: ((MappingEntityDefinitionImpl) customEntityDefinition).getEntries()){
+            customEntities.add(entry.getReferenceValue());
+        }
+        return customEntities;
+    }
+
+
+    public List<String> getAllMappingsFor(EntityDefinition abstractEntity) {
+        Preconditions.checkNotNull(abstractEntity, "Cannot retrieve the concrete mapping for the provided %s %s", new Object[]{EntityDefinition.class.getSimpleName(), abstractEntity});
+        if (abstractEntity instanceof BaseEntityDefinition) {
+            BaseEntityDefinition coreEntity = (BaseEntityDefinition)abstractEntity;
+            Preconditions.checkArgument(Objects.nonNull(coreEntity.getEntityType()), "Cannot retrieve the concrete mapping for the provided %s: %s needs to define a valid %s", new Object[]{BaseEntityDefinition.class.getSimpleName(), BaseEntityDefinition.class.getSimpleName(), EntityType.class.getSimpleName()});
+            List<String> mappings = new ArrayList<>();
+            mappings.add(this.getMappingFor(((BaseEntityDefinition)abstractEntity).getEntityType()));
+            return mappings;
+        } else if (abstractEntity instanceof CustomEntityDefinition) {
+            return this.getAllMappingsForCustomEntity((CustomEntityDefinition)abstractEntity);
+        } else {
+            throw new XatkitException(MessageFormat.format("{0} does not support the provided {1} {2}", this.getClass().getSimpleName(), EntityDefinition.class.getSimpleName(), abstractEntity.getClass().getSimpleName()));
+        }
     }
 }
