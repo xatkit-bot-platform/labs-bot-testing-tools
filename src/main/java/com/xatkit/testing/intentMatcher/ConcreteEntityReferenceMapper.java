@@ -5,18 +5,15 @@ import com.xatkit.core.recognition.EntityMapper;
 import com.xatkit.intent.*;
 import com.xatkit.intent.impl.MappingEntityDefinitionImpl;
 import fr.inria.atlanmod.commons.Preconditions;
-import fr.inria.atlanmod.commons.log.Log;
 import org.eclipse.emf.common.util.EList;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 public class ConcreteEntityReferenceMapper extends EntityMapper {
 
-    private final Random rng = new Random(42);
+    private final static int SEED = 42; // Answer to the Ultimate Question of Life, the Universe, and Everything
+    private final Random rng = new Random(SEED);
 
     public ConcreteEntityReferenceMapper() {
         this.registerDateTimeEntities();
@@ -120,16 +117,35 @@ public class ConcreteEntityReferenceMapper extends EntityMapper {
     }
 
 
+    private List<String> getMappingsForBaseEntity(EntityDefinition abstractEntity){
+        BaseEntityDefinition coreEntity = (BaseEntityDefinition)abstractEntity;
+        Preconditions.checkArgument(Objects.nonNull(coreEntity.getEntityType()), "Cannot retrieve the concrete mapping for the provided %s: %s needs to define a valid %s", new Object[]{BaseEntityDefinition.class.getSimpleName(), BaseEntityDefinition.class.getSimpleName(), EntityType.class.getSimpleName()});
+        List<String> mappings = new ArrayList<>();
+        mappings.add(this.getMappingFor(coreEntity.getEntityType()));
+        return mappings;
+    }
+
     public List<String> getAllMappingsFor(EntityDefinition abstractEntity) {
         Preconditions.checkNotNull(abstractEntity, "Cannot retrieve the concrete mapping for the provided %s %s", new Object[]{EntityDefinition.class.getSimpleName(), abstractEntity});
         if (abstractEntity instanceof BaseEntityDefinition) {
-            BaseEntityDefinition coreEntity = (BaseEntityDefinition)abstractEntity;
-            Preconditions.checkArgument(Objects.nonNull(coreEntity.getEntityType()), "Cannot retrieve the concrete mapping for the provided %s: %s needs to define a valid %s", new Object[]{BaseEntityDefinition.class.getSimpleName(), BaseEntityDefinition.class.getSimpleName(), EntityType.class.getSimpleName()});
-            List<String> mappings = new ArrayList<>();
-            mappings.add(this.getMappingFor(((BaseEntityDefinition)abstractEntity).getEntityType()));
-            return mappings;
+            return getMappingsForBaseEntity(abstractEntity);
         } else if (abstractEntity instanceof CustomEntityDefinition) {
             return this.getAllMappingsForCustomEntity((CustomEntityDefinition)abstractEntity);
+        } else {
+            throw new XatkitException(MessageFormat.format("{0} does not support the provided {1} {2}", this.getClass().getSimpleName(), EntityDefinition.class.getSimpleName(), abstractEntity.getClass().getSimpleName()));
+        }
+    }
+
+    public List<String> getSeveralMappingsFor(EntityDefinition abstractEntity, float percentage) {
+        Preconditions.checkNotNull(abstractEntity, "Cannot retrieve the concrete mapping for the provided %s %s", new Object[]{EntityDefinition.class.getSimpleName(), abstractEntity});
+        Preconditions.checkArgument(percentage <= 1., "percentage should be less than one", new Object[]{EntityDefinition.class.getSimpleName(), abstractEntity});
+        if (abstractEntity instanceof BaseEntityDefinition) {
+            return getMappingsForBaseEntity(abstractEntity);
+        } else if (abstractEntity instanceof CustomEntityDefinition) {
+            List<String> allMappings = this.getAllMappingsForCustomEntity((CustomEntityDefinition)abstractEntity);
+            Collections.shuffle(allMappings, new Random(SEED));
+            int numberOfElements = Math.round(allMappings.size()*percentage);
+            return allMappings.subList(0, numberOfElements == 0 ? 1 : numberOfElements);
         } else {
             throw new XatkitException(MessageFormat.format("{0} does not support the provided {1} {2}", this.getClass().getSimpleName(), EntityDefinition.class.getSimpleName(), abstractEntity.getClass().getSimpleName()));
         }

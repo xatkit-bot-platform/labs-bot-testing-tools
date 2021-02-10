@@ -79,8 +79,25 @@ public class MatchIntentExample {
     @Test
     public void testMatchingIntentsWithAllEntities() throws IntentRecognitionProviderException {
         IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
-        //List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntities();
-        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntitiesInThread();
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntities();
+        if(matchingIntents.size() == 0){
+            System.out.println("NO matching intents");
+        }
+        else {
+            for (IntentMatch im : matchingIntents) {
+                System.out.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+            }
+        }
+    }
+
+    @Test
+    public void testMatchingIntentsWithSeveralEntities() throws IntentRecognitionProviderException {
+        IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithSeveralEntities(0.25f);
         if(matchingIntents.size() == 0){
             System.out.println("NO matching intents");
         }
