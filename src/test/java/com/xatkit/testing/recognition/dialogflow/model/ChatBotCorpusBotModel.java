@@ -235,7 +235,8 @@ public class ChatBotCorpusBotModel extends ExecutionModelImpl {
         ;
         printHello.body(context -> {
             reactPlatform.reply(context, "Hey!");
-        }).next().moveTo(awaitingInput);init.next().when(eventIs(ReactEventProvider.ClientReady)).moveTo(awaitingInput);
+        }).next().moveTo(awaitingInput);
+        init.next().when(eventIs(ReactEventProvider.ClientReady)).moveTo(awaitingInput);
         val defaultFallback = fallbackState().body(context -> reactPlatform.reply(context, "Sorry, I didn't, get it"));
 
 

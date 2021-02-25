@@ -4,7 +4,10 @@ import com.xatkit.core.XatkitBot;
 import com.xatkit.core.recognition.IntentRecognitionProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.execution.ExecutionModel;
+import com.xatkit.execution.State;
+import com.xatkit.intent.IntentDefinition;
 import com.xatkit.testing.intentMatcher.IntentMatcher;
+import com.xatkit.testing.intentMatcher.IsolationMatcher;
 import com.xatkit.testing.intentMatcher.matches.IntentMatch;
 import com.xatkit.testing.intentMatcher.matches.StatelessIntentMatch;
 import com.xatkit.testing.recognition.dialogflow.model.*;
@@ -15,6 +18,9 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import static java.util.Objects.isNull;
@@ -53,33 +59,134 @@ public class MatchIntentExample {
         }
     }
 
+    private float[][] getConfusionMatrix(State s, IntentDefinition[] intents, List<IntentMatch> matchingIntents){
+        float[][] confusionMatrix = new float[intents.length][intents.length];
+        for (int i = 0; i < intents.length; i++){
+            for (int j = 0; j < intents.length; j++){
+                if(i == j)
+                    continue;
+                int numMatches = 0;
+                for (IntentMatch im: matchingIntents){
+                    if (im.getExpectedIntent().equals(intents[i]) &&
+                            im.getActualIntent().equals(intents[j]) &&
+                            im.getFromState().equals(s)){
+                        numMatches++;
+                        confusionMatrix[i][j] += im.getConfidence();
+                    }
+                }
+                if (numMatches > 0)
+                    confusionMatrix[i][j] /= numMatches;
+            }
+        }
+        return confusionMatrix;
+    }
+
+    private void printResultsCSV(List<IntentMatch> matchingIntents) {
+        for (State s : botModel.getStates()) {
+            if (s.getAllAccessedIntents().size() > 0) {
+                System.out.println(s.getName());
+                IntentDefinition[] intents = s.getAllAccessedIntents().toArray(new IntentDefinition[0]);
+                float[][] confusionMatrix = getConfusionMatrix(s, intents, matchingIntents);
+                for (IntentDefinition intent : intents) {
+                    System.out.print(", " + intent.getName());
+                }
+                System.out.println();
+                for (int i = 0; i < confusionMatrix.length; i++) {
+                    System.out.print(intents[i].getName());
+                    for (int j = 0; j < confusionMatrix[i].length; j++) {
+                        System.out.print(", " + confusionMatrix[i][j]);
+                    }
+                    System.out.println();
+                }
+            }
+        }
+    }
+
+    private void printResultsLaTeX(List<IntentMatch> matchingIntents){
+        for (State s : botModel.getStates()){
+            if (s.getAllAccessedIntents().size() > 0) {
+                System.out.println(s.getName());
+                IntentDefinition[] intents = s.getAllAccessedIntents().toArray(new IntentDefinition[0]);
+                float[][] confusionMatrix = getConfusionMatrix(s, intents, matchingIntents);
+                for (IntentDefinition intent : intents) System.out.print(" & " + intent.getName());
+                System.out.println(" \\\\");
+                for (int i = 0; i < confusionMatrix.length; i++){
+                    System.out.print(intents[i].getName());
+                    for (int j = 0; j < confusionMatrix[i].length; j++){
+                        System.out.print(" & " + confusionMatrix[i][j]);
+                    }
+                    System.out.println(" \\\\");
+                }
+            }
+        }
+    }
+
     @AfterClass
     public static void tearDownAfterClass() {
         botThread.interrupt();
     }
 
     @Test
-    public void testMatchingIntents() throws IntentRecognitionProviderException {
+    public void testMatchingIntents() throws IntentRecognitionProviderException, FileNotFoundException, UnsupportedEncodingException {
         IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
         List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntents();
         if(matchingIntents.size() == 0){
             System.out.println("NO matching intents");
         }
         else {
+            PrintWriter writer = new PrintWriter("matchingIntents.csv", "UTF-8");
             for (IntentMatch im : matchingIntents) {
                 System.out.println("Intent \"" + im.getExpectedIntent().getName()
                         + "\" was confused with intent \"" + im.getActualIntent().getName()
                         + "\" from state \"" + im.getFromState().getName()
                         + "\" with the sentence \"" + im.getMatchingSentence()
                         + "\" and a confidence of " + im.getConfidence());
+
+                writer.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
             }
+            writer.close();
         }
+
+        printResultsCSV(matchingIntents);
+
     }
 
     @Test
-    public void testMatchingIntentsWithAllEntities() throws IntentRecognitionProviderException {
+    public void testMatchingIntentsWithAllEntities() throws IntentRecognitionProviderException, FileNotFoundException, UnsupportedEncodingException {
         IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
         List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithAllEntities();
+        if(matchingIntents.size() == 0){
+            System.out.println("NO matching intents");
+        }
+        else {
+            PrintWriter writer = new PrintWriter("allmatchingIntents.csv", "UTF-8");
+            for (IntentMatch im : matchingIntents) {
+                System.out.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+
+                writer.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+            }
+            writer.close();
+        }
+
+        printResultsCSV(matchingIntents);
+    }
+
+    @Test
+    public void testMatchingIntentsWithSeveralEntities() throws IntentRecognitionProviderException {
+        IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
+        List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithSeveralEntities(0.25f);
         if(matchingIntents.size() == 0){
             System.out.println("NO matching intents");
         }
@@ -95,7 +202,7 @@ public class MatchIntentExample {
     }
 
     @Test
-    public void testMatchingIntentsWithSeveralEntities() throws IntentRecognitionProviderException {
+    public void testIntentInIsolation() throws IntentRecognitionProviderException {
         IntentMatcher intentMatcher = new IntentMatcher(botModel, intentRecognitionProvider);
         List<IntentMatch> matchingIntents = intentMatcher.getMatchingIntentsWithSeveralEntities(0.25f);
         if(matchingIntents.size() == 0){
@@ -123,6 +230,42 @@ public class MatchIntentExample {
             for (StatelessIntentMatch im : matchingIntents) {
                 System.out.println("Intent \"" + im.getExpectedIntent().getName()
                         + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+            }
+        }
+    }
+
+    @Test
+    public void testIntentMatchingInIsolation() throws IntentRecognitionProviderException {
+        IsolationMatcher intentMatcher = new IsolationMatcher(botModel, intentRecognitionProvider);
+        List<IntentMatch> matchingIntents = intentMatcher.intentMatchingInIsolation();
+        if(matchingIntents.size() == 0){
+            System.out.println("All intents matched itsself");
+        }
+        else {
+            for (IntentMatch im : matchingIntents) {
+                System.out.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
+                        + "\" with the sentence \"" + im.getMatchingSentence()
+                        + "\" and a confidence of " + im.getConfidence());
+            }
+        }
+    }
+
+    @Test
+    public void testIntentMatchingInIsolationWithAllEntities() throws IntentRecognitionProviderException {
+        IsolationMatcher intentMatcher = new IsolationMatcher(botModel, intentRecognitionProvider);
+        List<IntentMatch> matchingIntents = intentMatcher.intentMatchingInIsolationWithAllEntities();
+        if(matchingIntents.size() == 0){
+            System.out.println("NO matching intents");
+        }
+        else {
+            for (IntentMatch im : matchingIntents) {
+                System.out.println("Intent \"" + im.getExpectedIntent().getName()
+                        + "\" was confused with intent \"" + im.getActualIntent().getName()
+                        + "\" from state \"" + im.getFromState().getName()
                         + "\" with the sentence \"" + im.getMatchingSentence()
                         + "\" and a confidence of " + im.getConfidence());
             }
