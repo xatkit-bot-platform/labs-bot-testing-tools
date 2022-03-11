@@ -1,4 +1,4 @@
-# Xatkit's DialogFlow Testing Tools
+# Xatkit's Bot Testing Tools
 This repository contains utility classes to do advanced testing on
 [Xatkit](https://github.com/xatkit-bot-platform/xatkit) chatbots.
 
