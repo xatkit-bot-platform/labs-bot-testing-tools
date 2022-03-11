@@ -1,4 +1,4 @@
-package com.xatkit.testing.recognition.dialogflow;
+package com.xatkit.testing;
 
 import com.xatkit.execution.impl.StateImpl;
 import com.xatkit.intent.IntentDefinition;
