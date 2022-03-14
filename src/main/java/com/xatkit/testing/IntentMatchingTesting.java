@@ -10,6 +10,7 @@ import com.xatkit.core.recognition.IntentRecognitionProvider;
 import com.xatkit.core.recognition.IntentRecognitionProviderException;
 import com.xatkit.execution.State;
 import com.xatkit.execution.StateContext;
+import com.xatkit.intent.ContextParameterValue;
 import com.xatkit.intent.IntentDefinition;
 import com.xatkit.intent.RecognizedIntent;
 
@@ -30,23 +31,27 @@ import static java.util.Objects.nonNull;
 public class IntentMatchingTesting {
 
     /**
-     * The thread where the bot is running
+     * The thread where the bot is running.
      */
     private static Thread botThread;
 
     /**
-     * The intent recognition provider of the chatbot
+     * The intent recognition provider of the chatbot.
      */
     private static IntentRecognitionProvider intentRecognitionProvider;
 
     /**
-     * The name of the file containing the examples to be tested
+     * The name of the file containing the examples to be tested.
+     * <p>
+     * The structure of the csv file must be the following (i.e. the following must be the header of the csv file):
+     * <p>
+     * {@code utterance,expected_intent,detected_intent,expected_parameters,detected_parameters}, where the
+     * "detected" columns are empty since they will be filled through this process.
      */
-    private static String intentsFileName;
-
+    private static String intentsCsvFileName;
 
     /**
-     * Creates a "testing" or "temporal" state context
+     * Creates a "testing" or "temporal" state context.
      * @param intents the intents that the state of the state context will contain (i.e. the intents that can be
      *                matched through this state)
      * @return the new fake state context
@@ -62,7 +67,7 @@ public class IntentMatchingTesting {
     }
 
     /**
-     * Starts the bot and initializes {@link #intentRecognitionProvider}
+     * Starts the bot and initializes {@link #intentRecognitionProvider}.
      * @param xatkitBot the Xatkit bot that will be executed
      * @throws InterruptedException
      */
@@ -88,10 +93,10 @@ public class IntentMatchingTesting {
      */
     private static void runIntentMatching(StateContext testingStateContext) {
         String outputFilePath =
-                "src/test/resources/" + intentsFileName.split("\\.")[0] + "Result." + intentsFileName.split("\\.")[1];
+                "src/test/resources/" + intentsCsvFileName.split("\\.")[0] + "Result." + intentsCsvFileName.split("\\.")[1];
         try {
             String testDocPath =
-                    Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource(intentsFileName)).getPath();
+                    Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource(intentsCsvFileName)).getPath();
             CSVReader reader = new CSVReaderBuilder(new FileReader(testDocPath))
                     .withCSVParser(new CSVParserBuilder().withSeparator(',').build()).build();
             List<String[]> csv = reader.readAll();
@@ -101,10 +106,24 @@ public class IntentMatchingTesting {
             CSVWriter writer = new CSVWriter(new FileWriter(outputFilePath));
             writer.writeNext(header);
             for (String[] row : csv) {
-                String input = row[0];
+                String utterance = row[0];
                 String expectedIntent = row[1];
-                RecognizedIntent recognizedIntent = intentRecognitionProvider.getIntent(input, testingStateContext);
-                String[] newRow = {input, expectedIntent, recognizedIntent.getDefinition().getName()};
+                String expectedParameters = row[3];
+                RecognizedIntent recognizedIntent = intentRecognitionProvider.getIntent(utterance, testingStateContext);
+                List<String> parameters = new ArrayList<>();
+                List<ContextParameterValue> contextParameterValues = recognizedIntent.getValues();
+                for (ContextParameterValue contextParameterValue : contextParameterValues) {
+                    String parameterName = contextParameterValue.getContextParameter().getName();
+                    String parameterValue = contextParameterValue.getValue().toString();
+                    parameters.add(parameterName + " = " + parameterValue);
+                }
+                String[] newRow = {
+                        utterance,
+                        expectedIntent,
+                        recognizedIntent.getDefinition().getName(),
+                        expectedParameters,
+                        String.join("; ", parameters)
+                };
                 writer.writeNext(newRow);
             }
             writer.close();
@@ -121,7 +140,7 @@ public class IntentMatchingTesting {
      * @param intents   the intents to use in the test
      */
     public static void testIntentMatching(XatkitBot xatkitBot, String fileName, IntentDefinition... intents) {
-        intentsFileName = fileName;
+        intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
             StateContext testingStateContext = createTestingStateContext(Arrays.asList(intents));
@@ -140,7 +159,7 @@ public class IntentMatchingTesting {
      * @param state     the state containing the intents to use in the test
      */
     public static void testIntentMatching(XatkitBot xatkitBot, String fileName, State state) {
-        intentsFileName = fileName;
+        intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
             StateContext testingStateContext = createTestingStateContext(new ArrayList<>(state.getAllAccessedIntents()));

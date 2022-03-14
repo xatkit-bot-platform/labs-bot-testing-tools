@@ -48,10 +48,14 @@ public void intentsTest() {
 - `"myFile.csv` must be a csv file (located in the `src/test/resources/` folder of your project) containing a table 
   with this structure:
 
-| input        | expected_intent | detected_intent |
-|--------------|-----------------|-----------------|
-| Hello        | Greetings       || 
-| How are you? | HowAreYou       || 
+| utterance                               | expected_intent | detected_intent | expected_parameters           | detected_parameters |
+|-----------------------------------------|-----------------|-----------------|-------------------------------|---------------------|
+| Hello                                   | Greetings       |
+| How are you?                            | HowAreYou       | 
+| My name is John and I live in Barcelona | Presentation    |                 | name = John; city = Barcelona |
+
+Fill the `expected_parameters` column if there is any parameter to be matched, so you can later compare them with 
+`detected_parameters`
 
 After running this code, a file `myFileResult.csv` will be created in the `src/test/resources/` folder of your project, 
 filling the missing values of the `detected_intent` column. If the detected intents match with the expected intents, 
