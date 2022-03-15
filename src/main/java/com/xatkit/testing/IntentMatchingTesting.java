@@ -90,14 +90,16 @@ public class IntentMatchingTesting {
      * Creates a new file that contains the results of the intent matching test.
      *
      * @param testingStateContext the state context that contains a fake state with a set of intents
+     * @return the path to the generated file
      */
-    private static void runIntentMatching(StateContext testingStateContext) {
+    private static String runIntentMatching(StateContext testingStateContext) {
+        // Rename "path/to/file/my_file.csv" to "path/to/file/my_fileResult.csv"
         String outputFilePath =
                 "src/test/resources/" + intentsCsvFileName.split("\\.")[0] + "Result." + intentsCsvFileName.split("\\.")[1];
         try {
-            String testDocPath =
+            String intentsCsvFilePath =
                     Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResource(intentsCsvFileName)).getPath();
-            CSVReader reader = new CSVReaderBuilder(new FileReader(testDocPath))
+            CSVReader reader = new CSVReaderBuilder(new FileReader(intentsCsvFilePath))
                     .withCSVParser(new CSVParserBuilder().withSeparator(',').build()).build();
             List<String[]> csv = reader.readAll();
             String[] header = csv.get(0);
@@ -122,14 +124,18 @@ public class IntentMatchingTesting {
                         expectedIntent,
                         recognizedIntent.getDefinition().getName(),
                         expectedParameters,
-                        String.join("; ", parameters)
+                        String.join("; ", parameters),
+                        "",
+                        ""
                 };
                 writer.writeNext(newRow);
             }
             writer.close();
+            return outputFilePath;
         } catch (IOException | CsvException | IntentRecognitionProviderException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -138,17 +144,20 @@ public class IntentMatchingTesting {
      * @param xatkitBot the xatkit bot
      * @param fileName  the name of the file containing the table with the utterances and expected intents
      * @param intents   the intents to use in the test
+     * @return the path to the generated file
      */
-    public static void testIntentMatching(XatkitBot xatkitBot, String fileName, IntentDefinition... intents) {
+    public static String testIntentMatching(XatkitBot xatkitBot, String fileName, IntentDefinition... intents) {
         intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
             StateContext testingStateContext = createTestingStateContext(Arrays.asList(intents));
-            runIntentMatching(testingStateContext);
+            String outputFilePath = runIntentMatching(testingStateContext);
             botThread.interrupt();
+            return outputFilePath;
         } catch (InterruptedException | IntentRecognitionProviderException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -157,16 +166,19 @@ public class IntentMatchingTesting {
      * @param xatkitBot the xatkit bot
      * @param fileName  the name of the file containing the table with the utterances and expected intents
      * @param state     the state containing the intents to use in the test
+     * @return the path to the generated file
      */
-    public static void testIntentMatching(XatkitBot xatkitBot, String fileName, State state) {
+    public static String testIntentMatching(XatkitBot xatkitBot, String fileName, State state) {
         intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
             StateContext testingStateContext = createTestingStateContext(new ArrayList<>(state.getAllAccessedIntents()));
-            runIntentMatching(testingStateContext);
+            String outputFilePath = runIntentMatching(testingStateContext);
             botThread.interrupt();
+            return outputFilePath;
         } catch (InterruptedException | IntentRecognitionProviderException e) {
             e.printStackTrace();
         }
+        return null;
     }
 }
