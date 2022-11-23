@@ -52,16 +52,18 @@ public class IntentMatchingTesting {
 
     /**
      * Creates a "testing" or "temporal" state context.
-     * @param intents the intents that the state of the state context will contain (i.e. the intents that can be
-     *                matched through this state)
+     * @param stateName the name of the testing state
+     * @param intents   the intents that the state of the state context will contain (i.e. the intents that can be
+     *                  matched through this state)
      * @return the new fake state context
      * @throws IntentRecognitionProviderException
      */
-    private static StateContext createTestingStateContext(List<IntentDefinition> intents)
+    private static StateContext createTestingStateContext(String stateName, List<IntentDefinition> intents)
             throws IntentRecognitionProviderException {
         StateContext stateContext =  intentRecognitionProvider.createContext("TestContext");
         FakeState fakeState = new FakeState();
         fakeState.setIntents(intents);
+        fakeState.setName(stateName);
         stateContext.setState(fakeState);
         return stateContext;
     }
@@ -146,11 +148,12 @@ public class IntentMatchingTesting {
      * @param intents   the intents to use in the test
      * @return the path to the generated file
      */
-    public static String testIntentMatching(XatkitBot xatkitBot, String fileName, IntentDefinition... intents) {
+    public static String testIntentMatching(XatkitBot xatkitBot, String fileName,
+                                            String stateName, IntentDefinition... intents) {
         intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
-            StateContext testingStateContext = createTestingStateContext(Arrays.asList(intents));
+            StateContext testingStateContext = createTestingStateContext(stateName, Arrays.asList(intents));
             String outputFilePath = runIntentMatching(testingStateContext);
             botThread.interrupt();
             return outputFilePath;
@@ -172,7 +175,7 @@ public class IntentMatchingTesting {
         intentsCsvFileName = fileName;
         try {
             startBotThread(xatkitBot);
-            StateContext testingStateContext = createTestingStateContext(new ArrayList<>(state.getAllAccessedIntents()));
+            StateContext testingStateContext = createTestingStateContext(state.getName(), new ArrayList<>(state.getAllAccessedIntents()));
             String outputFilePath = runIntentMatching(testingStateContext);
             botThread.interrupt();
             return outputFilePath;
