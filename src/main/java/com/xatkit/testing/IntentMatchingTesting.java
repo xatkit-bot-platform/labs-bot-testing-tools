@@ -74,6 +74,7 @@ public class IntentMatchingTesting {
      * @throws InterruptedException
      */
     private static void startBotThread(XatkitBot xatkitBot) throws InterruptedException {
+        intentRecognitionProvider = null;
         botThread = new Thread(xatkitBot);
         botThread.start();
         while (isNull(intentRecognitionProvider)) {
